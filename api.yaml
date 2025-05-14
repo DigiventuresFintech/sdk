@@ -1,0 +1,290 @@
+openapi: 3.0.0
+info:
+  title: Digiventures API
+  description: API para integración con el sistema Digiventures
+  version: 1.0.0
+servers:
+  - url: https://api.qa.digiventures.com.ar
+    description: Servidor de QA
+  - url: https://api.staging.digiventures.la
+    description: Servidor de Staging
+  - url: https://api.production.digiventures.la
+    description: Servidor de Producción
+
+components:
+  securitySchemes:
+    ApiKeyAuth:
+      type: apiKey
+      in: query
+      name: authorization
+
+paths:
+  /authorization/{applicationId}/{secret}:
+    get:
+      summary: Obtener token de autorización
+      description: Obtiene un token de autorización para acceder a la API
+      parameters:
+        - name: applicationId
+          in: path
+          required: true
+          schema:
+            type: string
+          description: ID de la aplicación
+        - name: secret
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Secreto de la aplicación
+      responses:
+        "200":
+          description: Token de autorización generado exitosamente
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  token:
+                    type: string
+                  expiration:
+                    type: string
+                    format: date-time
+                  api:
+                    type: object
+                    properties:
+                      version:
+                        type: string
+                        description: Versión de la API a utilizar en las rutas (ej. '1.0')
+
+  /{version}/legajo:
+    post:
+      summary: Crear un nuevo legajo
+      description: Crea un nuevo legajo en el sistema. Permite diferentes estrategias de creación mediante el header 'strategy'.
+      security:
+        - ApiKeyAuth: []
+      parameters:
+        - name: version
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Versión de la API (recibida en la respuesta de autenticación)
+        - name: authorization
+          in: query
+          required: true
+          schema:
+            type: string
+          description: Token de autorización
+        - name: strategy
+          in: header
+          required: false
+          schema:
+            type: string
+            enum: [IGNORE, COMPLETE, OVERRIDE]
+          description: |
+            Estrategia de creación:
+            - IGNORE (default): Crea uno nuevo por cada request
+            - COMPLETE: Busca uno existente, completa con lo faltante y lo devuelve
+            - OVERRIDE: Busca uno existente y reemplaza todos los valores
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                firstname:
+                  type: string
+                  description: Nombre del usuario
+                lastname:
+                  type: string
+                  description: Apellido del usuario
+                email:
+                  type: string
+                  format: email
+                  description: Email del usuario
+                idNumber:
+                  type: string
+                  description: Número de identificación del usuario
+                name:
+                  type: string
+                  description: Nombre completo del usuario
+      responses:
+        "200":
+          description: Legajo creado exitosamente
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  _id:
+                    type: string
+                  name:
+                    type: string
+                  email:
+                    type: string
+                  idNumber:
+                    type: string
+                  referenceCode:
+                    type: string
+                  linkLandingNext:
+                    type: string
+                  linkRecover:
+                    type: string
+                  createdAt:
+                    type: string
+                    format: date-time
+                  updatedAt:
+                    type: string
+                    format: date-time
+
+  /{version}/legajo/{legajoId}:
+    get:
+      summary: Obtener un legajo
+      description: Obtiene la información de un legajo específico
+      security:
+        - ApiKeyAuth: []
+      parameters:
+        - name: version
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Versión de la API (recibida en la respuesta de autenticación)
+        - name: legajoId
+          in: path
+          required: true
+          schema:
+            type: string
+          description: ID del legajo
+        - name: authorization
+          in: query
+          required: true
+          schema:
+            type: string
+          description: Token de autorización
+      responses:
+        "200":
+          description: Legajo encontrado
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  _id:
+                    type: string
+                  name:
+                    type: string
+                  email:
+                    type: string
+                  idNumber:
+                    type: string
+                  referenceCode:
+                    type: string
+                  linkLandingNext:
+                    type: string
+                  linkRecover:
+                    type: string
+                  createdAt:
+                    type: string
+                    format: date-time
+                  updatedAt:
+                    type: string
+                    format: date-time
+
+    put:
+      summary: Actualizar un legajo
+      description: Actualiza la información de un legajo existente
+      security:
+        - ApiKeyAuth: []
+      parameters:
+        - name: version
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Versión de la API (recibida en la respuesta de autenticación)
+        - name: legajoId
+          in: path
+          required: true
+          schema:
+            type: string
+          description: ID del legajo
+        - name: authorization
+          in: query
+          required: true
+          schema:
+            type: string
+          description: Token de autorización
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                vouchers:
+                  type: object
+                  description: Configuración de vouchers
+      responses:
+        "200":
+          description: Legajo actualizado exitosamente
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  _id:
+                    type: string
+                  name:
+                    type: string
+                  email:
+                    type: string
+                  idNumber:
+                    type: string
+                  referenceCode:
+                    type: string
+                  linkLandingNext:
+                    type: string
+                  linkRecover:
+                    type: string
+                  createdAt:
+                    type: string
+                    format: date-time
+                  updatedAt:
+                    type: string
+                    format: date-time
+
+  /{fileUrl}:
+    get:
+      summary: Obtener archivo
+      description: Obtiene un archivo usando la URL completa proporcionada en la respuesta del legajo
+      parameters:
+        - name: fileUrl
+          in: path
+          required: true
+          schema:
+            type: string
+          description: URL completa del archivo (IMAGE_URL) obtenida en la respuesta del legajo
+        - name: authorization
+          in: query
+          required: false
+          schema:
+            type: string
+          description: Token de autorización (opcional dependiendo de la configuración)
+      responses:
+        "200":
+          description: Archivo encontrado
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  file:
+                    type: string
+                    format: byte
+                    description: Contenido del archivo codificado en base64
+        "404":
+          description: Archivo no encontrado
+        "401":
+          description: No autorizado 

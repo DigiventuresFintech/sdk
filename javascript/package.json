@@ -1,0 +1,38 @@
+{
+  "name": "@digiventures/sdk",
+  "version": "1.0.0",
+  "description": "SDK oficial para integrar con la API de Digiventures",
+  "main": "src/index.js",
+  "types": "src/index.d.ts",
+  "scripts": {
+    "test": "jest",
+    "build": "tsc",
+    "prepare": "npm run build"
+  },
+  "publishConfig": {
+    "registry": "https://npm.pkg.github.com"
+  },
+  "keywords": [
+    "digiventures",
+    "api",
+    "sdk"
+  ],
+  "author": "Digiventures",
+  "license": "MIT",
+  "dependencies": {
+    "axios": "^1.6.2",
+    "axios-retry": "^3.8.0"
+  },
+  "devDependencies": {
+    "@types/jest": "^29.5.5",
+    "@types/node": "^20.8.2",
+    "jest": "^29.7.0",
+    "ts-jest": "^29.1.1",
+    "typescript": "^5.2.2",
+    "nock": "^13.3.3"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/digiventures/sdk.git"
+  }
+} 

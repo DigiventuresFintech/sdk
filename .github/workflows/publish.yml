@@ -1,0 +1,133 @@
+name: Publish SDK Packages
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  bump-version:
+    runs-on: ubuntu-latest
+    outputs:
+      new_version: ${{ steps.bump-version.outputs.new_version }}
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GLOBAL_DIGIVENTURES_GITHUB_TOKEN }}
+      
+      - name: Configure Git
+        run: |
+          git config user.name "GitHub Actions Bot"
+          git config user.email "actions@github.com"
+      
+      - name: Determine next version
+        id: bump-version
+        run: |
+          # Get current version from package.json
+          CURRENT_VERSION=$(node -p "require('./javascript/package.json').version")
+          echo "Current version: $CURRENT_VERSION"
+          
+          # Split into major, minor, patch
+          IFS='.' read -r -a VERSION_PARTS <<< "$CURRENT_VERSION"
+          MAJOR="${VERSION_PARTS[0]}"
+          MINOR="${VERSION_PARTS[1]}"
+          PATCH="${VERSION_PARTS[2]}"
+          
+          # Increment patch version
+          NEW_PATCH=$((PATCH + 1))
+          NEW_VERSION="$MAJOR.$MINOR.$NEW_PATCH"
+          echo "New version: $NEW_VERSION"
+          
+          # Save new version as output
+          echo "new_version=$NEW_VERSION" >> $GITHUB_OUTPUT
+
+      - name: Update JavaScript package.json
+        run: |
+          NEW_VERSION="${{ steps.bump-version.outputs.new_version }}"
+          # Use jq to update the version
+          jq ".version = \"$NEW_VERSION\"" javascript/package.json > temp.json && mv temp.json javascript/package.json
+      
+      - name: Update PHP composer.json
+        run: |
+          NEW_VERSION="${{ steps.bump-version.outputs.new_version }}"
+          # Use jq to update the version
+          jq ".version = \"$NEW_VERSION\"" php/composer.json > temp.json && mv temp.json php/composer.json
+      
+      - name: Commit version changes
+        run: |
+          NEW_VERSION="${{ steps.bump-version.outputs.new_version }}"
+          git add javascript/package.json php/composer.json
+          git commit -m "Bump version to $NEW_VERSION [skip ci]"
+          git push
+
+  publish-js:
+    needs: bump-version
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          ref: main # Ensure we have the latest commit with version bump
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '16'
+          registry-url: 'https://npm.pkg.github.com'
+          scope: '@digiventures'
+
+      - name: Install dependencies
+        working-directory: ./javascript
+        run: npm ci
+
+      - name: Build
+        working-directory: ./javascript
+        run: npm run build
+
+      - name: Publish to GitHub Packages
+        working-directory: ./javascript
+        run: npm publish
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GLOBAL_DIGIVENTURES_GITHUB_TOKEN }}
+
+  publish-php:
+    needs: bump-version
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          ref: main # Ensure we have the latest commit with version bump
+
+      - name: Set up PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.0'
+          extensions: json, curl
+
+      - name: Install Composer
+        run: |
+          curl -sS https://getcomposer.org/installer | php
+          sudo mv composer.phar /usr/local/bin/composer
+
+      - name: Authenticate with GitHub Packages
+        run: |
+          composer config github-oauth.github.com ${{ secrets.GLOBAL_DIGIVENTURES_GITHUB_TOKEN }}
+
+      - name: Set up GitHub Packages repository
+        working-directory: ./php
+        run: |
+          composer config repositories.github '{"type": "vcs", "url": "https://github.com/digiventures/sdk"}'
+
+      - name: Publish to GitHub Packages
+        working-directory: ./php
+        run: |
+          # Create a git tag for this version
+          VERSION="${{ needs.bump-version.outputs.new_version }}"
+          git tag v$VERSION
+          git push origin v$VERSION
+          
+          # Create package for GitHub Packages
+          composer archive --format=zip --file=digiventures-sdk
+          
+          # Output the package
+          echo "Created package digiventures-sdk.zip" 
