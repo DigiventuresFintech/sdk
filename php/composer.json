@@ -1,6 +1,7 @@
 {
   "name": "digiventures/sdk",
   "description": "SDK oficial para integrar con la API de Digiventures",
+  "version": "1.0.2",
   "type": "library",
   "license": "MIT",
   "autoload": {
@@ -32,4 +33,4 @@
     "test": "phpunit",
     "cs": "phpcs --standard=PSR12 src"
   }
-} 
+}
