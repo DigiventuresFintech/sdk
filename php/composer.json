@@ -1,7 +1,7 @@
 {
   "name": "digiventures/sdk",
   "description": "SDK oficial para integrar con la API de Digiventures",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "type": "library",
   "license": "MIT",
   "authors": [
@@ -29,4 +29,4 @@
       "Digiventures\\SDK\\Tests\\": "tests/"
     }
   }
-} 
+}
