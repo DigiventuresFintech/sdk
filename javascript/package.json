@@ -1,5 +1,5 @@
 {
-  "name": "@digiventures/sdk",
+  "name": "digiventures-sdk",
   "version": "1.0.0",
   "description": "SDK oficial para integrar con la API de Digiventures",
   "main": "src/index.js",
@@ -8,9 +8,6 @@
     "test": "jest",
     "build": "tsc",
     "prepare": "npm run build"
-  },
-  "publishConfig": {
-    "registry": "https://npm.pkg.github.com"
   },
   "keywords": [
     "digiventures",
